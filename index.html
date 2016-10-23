@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+  
+<head>
+  <script src="https://unpkg.com/react@15.3.2/dist/react.js"></script>
+  <script src="https://unpkg.com/react-dom@15.3.2/dist/react-dom.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+  <script src="https://unpkg.com/react-router/umd/ReactRouter.min.js"></script>
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link href="css/simple-sidebar.css" rel="stylesheet">
+
+  <!-- jQuery -->
+  <script src="js/jquery.js"></script>
+
+  <!-- Bootstrap Core JavaScript -->
+  <script src="js/bootstrap.min.js"></script>
+
+  <!-- Map stuff -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.0.0-rc.3/dist/leaflet.js"></script>
+  
+  <style>
+    #mapid {
+      height: 500px;
+    }
+  </style>
+</head>
+  
+<body>
+  
+  <div id="wrapper">
+  
+  </div>
+  
+  <script type="text/babel">
+    var { Router, Route, IndexRoute, Link } = ReactRouter;
+    var destination = document.querySelector("#wrapper");
+
+    var About = React.createClass({
+      render: function() {
+        return (
+          <div>
+            <h2>ABOUT</h2>
+            <p>Uses React and React Router for pages. Uses Bootstrap for minimal styling. Uses Leaflet for map. Uses freegeoip for ip address search.</p>
+            <ul>
+            <li><a href="https://facebook.github.io/react/">React</a></li>
+            <li><a href="https://github.com/ReactTraining/react-router">React Router</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap</a></li>
+            <li><a href="http://leafletjs.com/">Leaflet</a></li>
+            <li><a href="https://freegeoip.net/">freegeoip</a></li>
+            </ul>
+            <p>This app is what it is partially because I spent all week working on an API in Rails that I couldn't get working on time. I gave up on it late into the weekend, and had to pivot. The Rails API is still going to be worked on for myself, it just won't be for this project like I had hoped.</p>
+            <p>freegeoip got details of ip addresses, which I then fed the lat/long to leaflet for visualizing. From personal usage, it seems fairly accurate. I was rushing and forgot that it had to be two _ajax_ calls and not just use any two _things_, which is why there's only one ajax call. If I have time, I'd go back and think of a way to incorporate another one.</p>
+            <p>Used React and react-router because I think React is really pleasant to write in. I also find it awesome how single page applications work and react-router makes it easy to comprehend. If I had time to go back, I think I would focus on separating each class into its own file. I would also consider writing it with ES6 as I believe that's where React is officially headed/at. Didn't realize till half way in that what I knew was ES5. So far, I don't think ES6 React looks nicer than ES5 React at all, but that's probably bias.</p>
+            <p>Bootstrap was because I'm so bad at CSS that it was worth it for me even if all it gave me was a sidebar. That I didn't even fully take advantage of. If I were to redo it, I'd probably add styling for these elements.</p>
+            <p>Hours, I'm not sure, but if you include all the hours I spent trying to make my own API work, then it's a bunch of hours spread across 2 weeks, followed by a burst during the weekend once I realized I had to scrap the Rails thing.</p>
+            <p>github repo at <a href="https://github.com/gmei2/midterm">https://github.com/gmei2/midterm</a></p>
+            <p>contact info on the side, but it's just <a href="mailto:gmei2@uic.edu">gmei2@uic.edu</a></p>
+          </div>
+        )
+      }
+    });
+
+    var Contact = React.createClass({
+      render: function() {
+        return (
+          <div>
+            <h2>CONTACT</h2>
+            <p>Just wanted to do another page cause there weren't a whole lot in react router.</p>
+            <a href="mailto:gmei2@uic">gmei2@uic.edu</a>
+          </div>
+        )
+      }
+    });
+
+    var Map = React.createClass({
+      map: {},
+
+      componentDidMount() {
+        this.map = L.map('mapid').setView([this.props.location.query.latitude, this.props.location.query.longitude], 11);
+        this.drawMap();
+        this.addMarker(this.props.location.query.latitude, this.props.location.query.longitude);
+      },
+
+      addMarker(latitude, longitude) {
+        var marker = L.marker([latitude, longitude]);
+        marker.addTo(this.map);
+      },
+
+      drawMap () {
+        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v9/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZ2FyZWltIiwiYSI6ImNpdG01aW1kMjAwbTcyeG4wbXkwOWpvdXMifQ.44f3u3w9aGs0F8ReV-KcwA', {
+          attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+          maxZoom: 18,
+        }).addTo(this.map);
+      },
+
+      render: function() {
+        return (
+          <div>
+            <h2>Map</h2>
+            <div id="mapid"></div>
+          </div>
+        )
+      }
+    });
+
+    var Home = React.createClass({
+
+      getInitialState() {
+        return ({
+          loadedDetails: false,
+          invalidIP: false,
+          ipDetails: {}
+        });
+      },
+
+      componentDidMount() {
+        document.getElementsByClassName("inputBox")[0].addEventListener("keydown", this.handleSubmit);
+        document.getElementsByClassName("inputButton")[0].addEventListener("click", this.handleSubmit);
+      },
+
+      handleSubmit(e) {
+        this.resetIPDetails();
+        if (e.keyCode == 13 || e.type == "click") {
+          e.preventDefault();
+          this.findLocationByIP();
+        }
+      },
+
+      resetIPDetails() {
+        this.setState({ loadedDetails: false });
+        this.setState({ invalidIP: false });
+        this.setState({ ipDetails: {} });
+      },
+
+      buildUrlString() {
+        var url = "http://freegeoip.net/json/";
+        var ip_address = document.getElementsByClassName("inputBox")[0].value;
+
+        return (url + ip_address);
+      },
+
+      findLocationByIP() {
+        var url = this.buildUrlString();
+
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function(result) {
+            this.displayIPDetails(result);
+          }.bind(this),
+          error: function(error) {
+            this.setState({ invalidIP: true });
+          }.bind(this)
+        });
+      },
+
+      displayIPDetails(ipDetails) {
+        this.setState({ loadedDetails: true });
+        this.setState({ ipDetails });
+      },
+
+      // Link as used here may not be the best way..
+      render: function() {
+        return (
+          <div>
+            <h2>Find user by IP</h2>
+            <form>
+              <input className="inputBox" placeholder="enter ip address here"></input>
+              <button className="inputButton">Submit</button>
+            </form>
+            <ErrorMessage hasError={this.state.invalidIP} errorMessage="invalid IP address"/>
+            <IPDetails ipDetails={this.state.ipDetails}/>
+            <MapLink shouldShow={this.state.loadedDetails} ipDetails={this.state.ipDetails}/>
+          </div>
+        )
+      }
+    });
+
+    var MapLink = React.createClass({
+      render: function () {
+        return this.props.shouldShow ? (
+          <Link to={{pathname: "map", query: {latitude: this.props.ipDetails.latitude, longitude: this.props.ipDetails.longitude}}}>View on map</Link>
+        ) : null;
+      }
+    });
+
+    var IPDetails = React.createClass({
+      render: function() {
+        return (
+          <div>
+            <ul>
+              <li>IP Address - {this.props.ipDetails.ip}</li>
+              <li>Country - {this.props.ipDetails.country_name}</li>
+              <li>State - {this.props.ipDetails.region_name}</li>
+              <li>City - {this.props.ipDetails.city}</li>
+              <li>Zip Code - {this.props.ipDetails.zip_code}</li>
+              <li>Latitude - {this.props.ipDetails.latitude}</li>
+              <li>Longitude - {this.props.ipDetails.longitude}</li>
+            </ul>
+          </div>
+        )
+      }
+    });
+
+    var ErrorMessage = React.createClass({
+      render: function() {
+        return this.props.hasError ? (
+          <p>{this.props.errorMessage}</p>
+        ) : null;
+      }
+    });
+
+    var App = React.createClass({
+      render: function() {
+        return (
+          <div>
+            <div id="sidebar-wrapper">
+              <ul className="sidebar-nav">
+                <li className="sidebar-brand"><Link to="/">gary</Link></li>
+                <li><Link to="/">Home</Link></li>
+                <li><Link to="/about">About</Link></li>
+                <li><Link to="/contact">Contact</Link></li>
+              </ul>
+            </div>
+            <div id="page-content-wrapper">
+              <div className="container-fluid">
+                <div className="row">
+                  <div className="col-lg-12">
+                    <h1>Midterm proj</h1>
+                    {this.props.children}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    });
+  
+    ReactDOM.render(
+      <Router>
+          <Route path="/" component={App}>
+            <IndexRoute component={Home}/>
+            <Route path="about" component={About}/>
+            <Route path="contact" component={Contact}/>
+            <Route path="map" component={Map}/>
+          </Route>
+      </Router>,
+      destination
+    );
+  </script>
+</body>
+  
+</html>
