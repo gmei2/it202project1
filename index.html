@@ -1,7 +1,11 @@
 <!DOCTYPE html>
+<!-- https://nameless-oasis-66756.herokuapp.com -->
 <html>
   
 <head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta content="utf-8" http-equiv="encoding">
+
   <script src="https://unpkg.com/react@15.3.2/dist/react.js"></script>
   <script src="https://unpkg.com/react-dom@15.3.2/dist/react-dom.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
@@ -80,9 +84,14 @@
       map: {},
 
       componentDidMount() {
-        this.map = L.map('mapid').setView([this.props.location.query.latitude, this.props.location.query.longitude], 11);
-        this.drawMap();
-        this.addMarker(this.props.location.query.latitude, this.props.location.query.longitude);
+        var latitude = this.props.location.query.latitude;
+        var longitude = this.props.location.query.longitude;
+
+        if (latitude && longitude) {
+          this.map = L.map('mapid').setView([latitude, longitude], 11);
+          this.drawMap();
+          this.addMarker(this.props.location.query.latitude, this.props.location.query.longitude);
+        }
       },
 
       addMarker(latitude, longitude) {
@@ -209,7 +218,10 @@
     var ErrorMessage = React.createClass({
       render: function() {
         return this.props.hasError ? (
-          <p>{this.props.errorMessage}</p>
+          <div>
+            <p>{this.props.errorMessage}</p>
+            <p>*sometimes adblockers make this screwy. try disabling any adblockers*</p>
+          </div>
         ) : null;
       }
     });
