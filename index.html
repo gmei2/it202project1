@@ -40,7 +40,7 @@
   </div>
   
   <script type="text/babel">
-    var { Router, Route, IndexRoute, Link } = ReactRouter;
+    var { Router, Route, IndexRoute, Link, hashHistory } = ReactRouter;
     var destination = document.querySelector("#wrapper");
 
     var About = React.createClass({
@@ -294,7 +294,7 @@
     });
   
     ReactDOM.render(
-      <Router>
+      <Router history={hashHistory}>
           <Route path="/" component={App}>
             <IndexRoute component={Home}/>
             <Route path="about" component={About}/>
